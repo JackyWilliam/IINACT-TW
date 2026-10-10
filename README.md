@@ -1,10 +1,10 @@
-# DACT 台服 IINACT 依赖
+# DACT 台服 IINACT 依賴
 
-本仓库是 [DalamudActCompat-TW](https://github.com/JackyWilliam/DalamudActCompat-TW) 的独立台服依赖源码库，基于 [PlusoneChiang/IINACT](https://github.com/PlusoneChiang/IINACT) 的 `tc/api13_net9`（`0788c177c5df622c9e20c4f00027b873732b5606`）合入 DACT 嵌入式 ACT、OverlayPlugin 和 Host 兼容层。目标为台服 API 13 / .NET 9。
+本倉庫是 [DalamudActCompat-TW](https://github.com/JackyWilliam/DalamudActCompat-TW) 的獨立台服依賴原始碼庫，基於 [PlusoneChiang/IINACT](https://github.com/PlusoneChiang/IINACT) 的 `tc/api13_net9`（`0788c177c5df622c9e20c4f00027b873732b5606`）合入 DACT 嵌入式 ACT、OverlayPlugin 和 Host 相容層。目標為台服 API 13 / .NET 9。
 
-构建及完整回归由主仓库的 [Taiwan Build](https://github.com/JackyWilliam/DalamudActCompat-TW/actions/workflows/build.yml) 执行。请递归克隆主仓库并运行 `tools/build-taiwan.ps1`，依赖由 gitlink 与哈希锁文件固定。本仓库不发布独立 IINACT 安装包，继承的独立插件发布工作流未启用。
+構建及完整迴歸由主倉庫的 [Taiwan Build](https://github.com/JackyWilliam/DalamudActCompat-TW/actions/workflows/build.yml) 執行。請遞迴克隆主倉庫並執行 `tools/build-taiwan.ps1`，依賴由 gitlink 與雜湊鎖檔案固定。本倉庫不釋出獨立 IINACT 安裝包，繼承的獨立外掛釋出工作流未啟用。
 
-DACT 台服问题请提交到 [DalamudActCompat-TW Issues](https://github.com/JackyWilliam/DalamudActCompat-TW/issues)。原作者版权、GPL-3.0 及第三方许可保持，以下原上游说明保留用于溯源，其中安装与构建入口不适用于 DACT 台服包。
+DACT 台服問題請提交到 [DalamudActCompat-TW Issues](https://github.com/JackyWilliam/DalamudActCompat-TW/issues)。原作者版權、GPL-3.0 及第三方許可保持，以下原上游說明保留用於溯源，其中安裝與構建入口不適用於 DACT 台服包。
 
 ---
 
