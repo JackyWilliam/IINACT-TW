@@ -35,6 +35,21 @@ internal class Patcher
             plugin.Assembly.MainModule.Resources.Remove(resource);
         }
 
+        // Costura's module initializer only installs the embedded-assembly resolver.
+        // All Costura resources are extracted above, so retaining the initializer is
+        // unnecessary. Rewriting the assembly can otherwise leave a poison initializer
+        // (`ldnull; throw`) that makes the patched plugin fail as soon as it is loaded.
+        var moduleInitializer = plugin.Assembly.MainModule.Types
+                                      .First(type => type.Name == "<Module>")
+                                      .Methods
+                                      .FirstOrDefault(method => method.Name == ".cctor");
+        if (moduleInitializer is not null)
+        {
+            var moduleInitializerIl = moduleInitializer.Body.GetILProcessor();
+            moduleInitializerIl.Clear();
+            moduleInitializerIl.Emit(OpCodes.Ret);
+        }
+
         var method = plugin.GetMethod(
             "System.Void FFXIV_ACT_Plugin.ACTWrapper::RunOnACTUIThread(System.Action)");
         var ilProcessor = method.Body.GetILProcessor();
@@ -62,7 +77,7 @@ internal class Patcher
             while (ilProcessor.Body.Instructions.First().OpCode != OpCodes.Ldstr)
                 ilProcessor.RemoveAt(0);
             ilProcessor.Replace(
-                0, Instruction.Create(OpCodes.Ldstr, $"This is IINACT {PluginVersion} (API {ApiVersion.IinactApiVersion}) based on FFXIV_ACT_Plugin {{0}}"));
+                0, Instruction.Create(OpCodes.Ldstr, LogFormatIdentity.ExpectedTemplate(PluginVersion)));
             ilProcessor.Replace(1, Instruction.Create(OpCodes.Ldc_I4_1));
             var stelemIndex = Array.FindIndex(ilProcessor.Body.Instructions.ToArray(),
                                               code => code.OpCode == OpCodes.Stelem_Ref);

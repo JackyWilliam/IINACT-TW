@@ -34,7 +34,8 @@ public unsafe class ZoneDownHookManager : IDisposable
     {
         this.notificationManager = notificationManager;
 		buffer = new SimpleBuffer(1024 * 1024);
-        var multiScanner = new MultiSigScanner();
+        // Rebased scan results outlive the temporary image; release it even on initialization failure.
+        using var multiScanner = new MultiSigScanner();
         var moduleBase = multiScanner.Module.BaseAddress;
         
         var version = GetRunningGameVersion();

@@ -40,7 +40,7 @@ namespace RainbowMage.OverlayPlugin.EventSources
         public FFXIVClientStructsEventSource(TinyIoCContainer container) : base(container)
         {
             atkStageMemory = container.Resolve<IAtkStageMemory>();
-            
+
             RegisterEventHandler("getFFXIVCSAddonSlow", (msg) =>
             {
                 var key = msg["name"]?.ToString();
@@ -88,14 +88,14 @@ namespace RainbowMage.OverlayPlugin.EventSources
             var member = partyMembers[index];
             return TextNodeToEntry(member.Name, index, type);
         }
-        
+
         private static unsafe SortedPartyList.Entry TrustMemberToEntry(
             Span<AddonPartyList.PartyListMemberStruct> trustMembers, int index, SortedPartyList.Entry.EntryType type)
         {
             var member = trustMembers[index];
             return TextNodeToEntry(member.Name, index, type);
         }
-        
+
         private static unsafe SortedPartyList.Entry TextNodeToEntry(
             AtkTextNode* textNode, int index, SortedPartyList.Entry.EntryType type)
         {
@@ -136,7 +136,9 @@ namespace RainbowMage.OverlayPlugin.EventSources
                 return null;
             }
 
-            static void HandleDeserializationError(object sender, ErrorEventArgs errorArgs) => 
+            static void HandleDeserializationError(
+                object sender,
+                Newtonsoft.Json.Serialization.ErrorEventArgs errorArgs) =>
                 errorArgs.ErrorContext.Handled = true;
 
             var settings = new Newtonsoft.Json.JsonSerializerSettings

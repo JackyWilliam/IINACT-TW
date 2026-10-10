@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using Machina.FFXIV;
 
@@ -7,26 +7,32 @@ namespace RainbowMage.OverlayPlugin.NetworkProcessors.PacketHelper
     abstract class LineBaseCustom<
         HeaderStruct_Global, PacketStruct_Global,
         HeaderStruct_CN, PacketStruct_CN,
-        HeaderStruct_KR, PacketStruct_KR>
+        HeaderStruct_KR, PacketStruct_KR,
+        HeaderStruct_TC, PacketStruct_TC>
         where HeaderStruct_Global : struct, IHeaderStruct
         where PacketStruct_Global : struct, IPacketStruct
         where HeaderStruct_CN : struct, IHeaderStruct
         where PacketStruct_CN : struct, IPacketStruct
         where HeaderStruct_KR : struct, IHeaderStruct
         where PacketStruct_KR : struct, IPacketStruct
+        where HeaderStruct_TC : struct, IHeaderStruct
+        where PacketStruct_TC : struct, IPacketStruct
     {
-        protected static FFXIVRepository ffxiv;
+        protected readonly FFXIVRepository ffxiv;
 
         protected readonly Func<string, DateTime, bool> logWriter;
         protected readonly RegionalizedPacketHelper<
             HeaderStruct_Global, PacketStruct_Global,
             HeaderStruct_CN, PacketStruct_CN,
-            HeaderStruct_KR, PacketStruct_KR> packetHelper;
+            HeaderStruct_KR, PacketStruct_KR,
+        HeaderStruct_TC, PacketStruct_TC> packetHelper;
         protected GameRegion? currentRegion;
 
         protected LineBaseCustom(TinyIoCContainer container, uint logFileLineID, string logLineName, string opcodeName)
         {
-            ffxiv = ffxiv ?? container.Resolve<FFXIVRepository>();
+            // Reinitialization can reuse the assembly while replacing the container. Keeping
+            // this binding per instance prevents subscriptions from targeting a disposed parser.
+            ffxiv = container.Resolve<FFXIVRepository>();
             ffxiv.RegisterNetworkParser(MessageReceived);
             ffxiv.RegisterProcessChangedHandler(ProcessChanged);
 
@@ -35,7 +41,8 @@ namespace RainbowMage.OverlayPlugin.NetworkProcessors.PacketHelper
             packetHelper = RegionalizedPacketHelper<
                 HeaderStruct_Global, PacketStruct_Global,
                 HeaderStruct_CN, PacketStruct_CN,
-                HeaderStruct_KR, PacketStruct_KR>.CreateFromOpcodeConfig(opcodeConfig, opcodeName);
+                HeaderStruct_KR, PacketStruct_KR,
+        HeaderStruct_TC, PacketStruct_TC>.CreateFromOpcodeConfig(opcodeConfig, opcodeName);
 
             if (packetHelper == null)
             {
@@ -78,8 +85,10 @@ namespace RainbowMage.OverlayPlugin.NetworkProcessors.PacketHelper
             if (line != null)
             {
                 DateTime serverTime = ffxiv.EpochToDateTime(epoch);
-                logWriter(line, serverTime);
+                logWriter(FormatLine(line), serverTime);
             }
         }
+
+        protected virtual string FormatLine(string line) => line;
     }
 }

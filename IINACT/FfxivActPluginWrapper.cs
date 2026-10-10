@@ -20,6 +20,8 @@ using FFXIV_ACT_Plugin.Resource;
 using IINACT.Network;
 using Microsoft.MinIoC;
 using ACTWrapper = FFXIV_ACT_Plugin.Common.ACTWrapper;
+using MachinaGameRegion = Machina.FFXIV.GameRegion;
+using MachinaOpcodeManager = Machina.FFXIV.Headers.Opcodes.OpcodeManager;
 
 namespace IINACT;
 
@@ -62,16 +64,19 @@ public partial class FfxivActPluginWrapper : IDisposable
     public ParseSettings ParseSettings = null!;
     public readonly IDataRepository Repository;
     public readonly IDataSubscription Subscription;
+    public IActPluginV1 ActPluginInstance => ffxivActPlugin;
 
     public unsafe FfxivActPluginWrapper(
         Configuration configuration, ClientLanguage dalamudClientLanguage, IChatGui chatGui, IFramework framework,
-        ICondition condition)
+        ICondition condition, bool? chineseRegionOverride = null, MachinaGameRegion? regionOverride = null)
     {
         this.configuration = configuration;
         this.dalamudClientLanguage = dalamudClientLanguage;
         this.chatGui = chatGui;
         this.framework = framework;
         this.condition = condition;
+
+        ConfigureRegion(dalamudClientLanguage);
 
         ffxivActPlugin = new FFXIV_ACT_Plugin.FFXIV_ACT_Plugin();
         Plugin.Log.Information($"Initializing FFXIV_ACT_Plugin version {typeof(FFXIV_ACT_Plugin.FFXIV_ACT_Plugin).Assembly.GetName().Version}");
@@ -141,8 +146,19 @@ public partial class FfxivActPluginWrapper : IDisposable
             Dalamud.Game.ClientLanguage.English => Language.English,
             Dalamud.Game.ClientLanguage.German => Language.German,
             Dalamud.Game.ClientLanguage.French => Language.French,
-            _ => dalamudClientLanguage.ToString() == "ChineseSimplified" ? Language.Chinese : Language.English
+            _ => dalamudClientLanguage.ToString() switch
+            {
+                "ChineseSimplified" => Language.Chinese,
+                "ChineseTraditional" or "TraditionalChinese" => Language.TraditionalChinese,
+                _ => Language.English,
+            }
         };
+
+    // This checkout targets only the Taiwan client. Imported mainland settings
+    // must not replace the Taiwan opcode table; language remains independent.
+    public static void ConfigureRegion(ClientLanguage clientLanguage, bool? chineseRegionOverride = null,
+        MachinaGameRegion? regionOverride = null)
+        => MachinaOpcodeManager.Instance.SetRegion(MachinaGameRegion.TraditionalChinese);
 
     public void Dispose()
     {
@@ -191,11 +207,7 @@ public partial class FfxivActPluginWrapper : IDisposable
 
         settingsMediator.ProcessException = OnProcessException;
 
-        var line = logFormat.FormatParseSettings(ParseSettings.DisableDamageShield, ParseSettings.DisableCombinePets,
-                                                 ParseSettings.LanguageID, ParseSettings.ParseFilter,
-                                                 ParseSettings.SimulateIndividualDoTCrits,
-                                                 ParseSettings.ShowRealDoTTicks);
-        logOutput.WriteLine(LogMessageType.Settings, DateTime.MinValue, line);
+        WriteParseSettings();
 
         var line2 = logFormat.FormatMemorySettings(DataCollectionSettings.ProcessID,
                                                    DataCollectionSettings.LogFileFolder,
@@ -209,6 +221,26 @@ public partial class FfxivActPluginWrapper : IDisposable
 
         if (!processManager.Verify())
             throw new InvalidOperationException("Game offsets could not be found");
+    }
+
+    public void SetParseFilterMode(ParseFilterMode mode)
+    {
+        if (!Enum.IsDefined(mode)) mode = ParseFilterMode.None;
+        if (ParseSettings.ParseFilter == mode) return;
+        // ReportCombatData reads this shared object on each event, just as ACT's
+        // settings page does. No parser/network restart is needed for this field.
+        ParseSettings.ParseFilter = mode;
+        configuration.ParseFilterMode = (int)mode;
+        WriteParseSettings();
+    }
+
+    private void WriteParseSettings()
+    {
+        var line = logFormat.FormatParseSettings(ParseSettings.DisableDamageShield, ParseSettings.DisableCombinePets,
+                                                 ParseSettings.LanguageID, ParseSettings.ParseFilter,
+                                                 ParseSettings.SimulateIndividualDoTCrits,
+                                                 ParseSettings.ShowRealDoTTicks);
+        logOutput.WriteLine(LogMessageType.Settings, DateTime.MinValue, line);
     }
 
     private void OnChatMessage(

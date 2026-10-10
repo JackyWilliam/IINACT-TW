@@ -23,25 +23,8 @@
     </ItemGroup>
 
     <PropertyGroup>
-        <DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     </PropertyGroup>
-
-    <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
-        <DalamudLibPath>$(DALAMUD_HOME)/</DalamudLibPath>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))'">
-        <DalamudLibPath Condition="Exists('$(HOME)/Library/Application Support/XIVTheCalamity/dalamud/hooks/dev/')">$(HOME)/Library/Application Support/XIVTheCalamity/dalamud/hooks/dev/</DalamudLibPath>
-        <DalamudLibPath Condition="'$(DalamudLibPath)' == ''">$(HOME)/Library/Application Support/XIV on Mac/dalamud/Hooks/dev/</DalamudLibPath>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <Reference Include="Dalamud">
-            <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-    </ItemGroup>
 
     <ItemGroup>
         <Reference Include="FFXIV_ACT_Plugin">

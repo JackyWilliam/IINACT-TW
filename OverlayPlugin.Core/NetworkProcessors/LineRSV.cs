@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using RainbowMage.OverlayPlugin.MemoryProcessors;
 using RainbowMage.OverlayPlugin.NetworkProcessors.PacketHelper;
@@ -8,7 +8,8 @@ namespace RainbowMage.OverlayPlugin.NetworkProcessors
     class LineRSV : LineBaseCustom<
             Server_MessageHeader_Global, LineRSV.RSV_v62,
             Server_MessageHeader_CN, LineRSV.RSV_v62,
-            Server_MessageHeader_KR, LineRSV.RSV_v62>
+            Server_MessageHeader_KR, LineRSV.RSV_v62,
+            Server_MessageHeader_TC, LineRSV.RSV_v62>
     {
         [StructLayout(LayoutKind.Explicit, Size = structSize, Pack = 1)]
         internal unsafe struct RSV_v62 : IPacketStruct
@@ -29,7 +30,6 @@ namespace RainbowMage.OverlayPlugin.NetworkProcessors
                 {
                     int valSize = Math.Min(valueByteCount, valueSize);
                     return
-                        $"{ffxiv.GetLocaleString()}|" +
                         $"{valueByteCount:X8}|" +
                         $"{FFXIVMemory.GetStringFromBytes(key, keySize).Replace("\r", "\\r").Replace("\n", "\\n")}|" +
                         $"{FFXIVMemory.GetStringFromBytes(value, valSize, valSize).Replace("\r", "\\r").Replace("\n", "\\n")}";
@@ -43,5 +43,9 @@ namespace RainbowMage.OverlayPlugin.NetworkProcessors
 
         public LineRSV(TinyIoCContainer container)
             : base(container, LogFileLineID, logLineName, MachinaPacketName) { }
+
+        // Locale belongs to the active repository rather than the packet bytes. Prefix it after
+        // decoding so OverlayPlugin reloads cannot make the packet struct retain an old instance.
+        protected override string FormatLine(string line) => $"{ffxiv.GetLocaleString()}|{line}";
     }
 }
